@@ -3,7 +3,7 @@ from groq import Groq, RateLimitError
 import requests as r
 import os
 import time
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="KP Personal Assistant", page_icon="🤖")
@@ -25,16 +25,17 @@ except KeyError:
 # --- 3. Helper Functions ---
 
 @retry(
-    stop=stop_after_attempt(5), 
-    wait=wait_exponential(multiplier=2, min=4, max=60), 
-    retry=retry_if_exception_type(Exception)
+stop=stop_after_attempt(5), 
+    wait=wait_exponential(multiplier=2, min=5, max=70), # Max wait now 70s
+    retry=retry_if_exception_type(Exception),
+    reraise=True
 )
 def safe_groq_call(chat_client, model, chat_messages):
     """Executes a Groq call with automatic retry logic."""
     return chat_client.chat.completions.create(
         model=model,
         messages=chat_messages,
-        max_tokens=1024,
+        max_tokens=512, # Limit response length to control costs and ensure concise answers
         temperature=0.1,
     )
 
@@ -122,8 +123,10 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
 
     try:
         with st.spinner("Thinking..."):
+            # Your buffer to prevent RPM limits
+            time.sleep(2)
             client = Groq(api_key=user_api_key)
-            recent_history = st.session_state.messages[-3:]
+            recent_history = st.session_state.messages[-2:]
 
             SYSTEM_INSTRUCTION = (
                 "You are a helpful KP Personal assistant. Use the provided context to answer. "
@@ -139,7 +142,7 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
             ]
             messages.extend(recent_history)
 
-            time.sleep(3) # Buffer for RPM limits
+            time.sleep(5) # Buffer for RPM limits
             response = safe_groq_call(client, "llama-3.3-70b-versatile", messages)
             answer = response.choices[0].message.content
 
@@ -147,9 +150,12 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
                 st.markdown(answer)
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
-    except RateLimitError:
-        st.error("⚠️ Groq is overloaded. System is cooling down for 60 seconds...")
-        time.sleep(60) # Force the app to wait before the next attempt is possible
-        st.rerun()
+    except (RateLimitError, RetryError) as e:
+        # Clear the 'Thinking...' spinner before showing error
+        st.empty()
+        st.error("⏳ **Groq Limit Reached:** You've used all 12,000 tokens for this minute.")
+        st.info("The budget resets every 60 seconds. Please wait a moment before sending your next message.")
+        st.stop()
+
     except Exception as e:
         st.error(f"⚠️ An unexpected error occurred: {e}")
