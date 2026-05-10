@@ -1,0 +1,10 @@
+streamlit
+groq
+requests
+tenacity
+markdown
+faiss-cpu 
+sentence-transformers 
+torch
+torchvision
+langchain-text-splitters
