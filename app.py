@@ -25,8 +25,8 @@ except KeyError:
 # --- 3. Helper Functions ---
 
 @retry(
-stop=stop_after_attempt(5), 
-    wait=wait_exponential(multiplier=2, min=5, max=70), # Max wait now 70s
+stop=stop_after_attempt(7), 
+    wait=wait_exponential(multiplier=2, min=2, max=60), # Max wait now 70s
     retry=retry_if_exception_type(Exception),
     reraise=True
 )
@@ -119,14 +119,13 @@ counter_placeholder = st.empty()
 if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
 
     st.chat_message("user").markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
 
     try:
         with st.spinner("Thinking..."):
             # Your buffer to prevent RPM limits
-            time.sleep(2)
+            time.sleep(1)
             client = Groq(api_key=user_api_key)
-            recent_history = st.session_state.messages[-2:]
+
 
             SYSTEM_INSTRUCTION = (
                 "You are a helpful KP Personal assistant. Use the provided context to answer. "
@@ -138,17 +137,16 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
 
             messages = [
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
-                {"role": "system", "content": f"CONTEXT:\n{st.session_state.context[:8000]}"} # Truncate context to avoid token limits
+                {"role": "system", "content": f"CONTEXT:\n{st.session_state.context[:8000]}"}, # Truncate context to avoid token limits
+                {"role": "user", "content": prompt}
             ]
-            messages.extend(recent_history)
 
-            time.sleep(5) # Buffer for RPM limits
+            time.sleep(3) # Buffer for RPM limits
             response = safe_groq_call(client, "llama-3.3-70b-versatile", messages)
             answer = response.choices[0].message.content
 
             with st.chat_message("assistant"):
                 st.markdown(answer)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except (RateLimitError, RetryError) as e:
         # Clear the 'Thinking...' spinner before showing error
