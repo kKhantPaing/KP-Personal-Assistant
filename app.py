@@ -147,7 +147,7 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except Exception as e:
-        if "429" in str(e):
+        if "RateLimitError" in str(e):
             st.error("Groq Rate Limit reached. Please wait a few minutes.")
         else:
             st.error(f"Error: {e}")
