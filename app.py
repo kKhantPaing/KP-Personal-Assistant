@@ -1,5 +1,5 @@
 import streamlit as st
-from groq import Groq
+from groq import Groq, RateLimitError
 import requests as r
 import os
 import time
@@ -25,8 +25,8 @@ except KeyError:
 # --- 3. Helper Functions ---
 
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(5), 
+    wait=wait_exponential(multiplier=2, min=4, max=60), 
     retry=retry_if_exception_type(Exception)
 )
 def safe_groq_call(chat_client, model, chat_messages):
@@ -134,11 +134,11 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
 
             messages = [
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
-                {"role": "system", "content": f"CONTEXT:\n{st.session_state.context[:10000]}"}
+                {"role": "system", "content": f"CONTEXT:\n{st.session_state.context[:8000]}"} # Truncate context to avoid token limits
             ]
             messages.extend(recent_history)
 
-            time.sleep(1) # Buffer for RPM limits
+            time.sleep(3) # Buffer for RPM limits
             response = safe_groq_call(client, "llama-3.3-70b-versatile", messages)
             answer = response.choices[0].message.content
 
@@ -146,8 +146,7 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
                 st.markdown(answer)
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
+    except RateLimitError:
+        st.error("🚫 Groq Rate Limit reached. Please wait 60 seconds and try again.")
     except Exception as e:
-        if "RateLimitError" in str(e):
-            st.error("Groq Rate Limit reached. Please wait a few minutes.")
-        else:
-            st.error(f"Error: {e}")
+        st.error(f"⚠️ An unexpected error occurred: {e}")
