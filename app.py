@@ -123,10 +123,11 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
     try:
         with st.spinner("Thinking..."):
             client = Groq(api_key=user_api_key)
-            recent_history = st.session_state.messages[-5:]
+            recent_history = st.session_state.messages[-3:]
 
             SYSTEM_INSTRUCTION = (
                 "You are a helpful KP Personal assistant. Use the provided context to answer. "
+                "CRITICAL: Keep your answers under 150 words. "
                 "If the answer is not in the context, say: 'I can only answer questions based on KP's data.' "
                 "Do not use outside knowledge. Never fabricate information. "
                 "Only mention the source repository for github projects when answering. No speculation."
@@ -147,6 +148,8 @@ if prompt := st.chat_input("Ask a question about KP's data...", max_chars=200):
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except RateLimitError:
-        st.error("🚫 Groq Rate Limit reached. Please wait 60 seconds and try again.")
+        st.error("⚠️ Groq is overloaded. System is cooling down for 60 seconds...")
+        time.sleep(60) # Force the app to wait before the next attempt is possible
+        st.rerun()
     except Exception as e:
         st.error(f"⚠️ An unexpected error occurred: {e}")
