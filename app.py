@@ -96,7 +96,7 @@ def load_all_context(api_key):
 
 # --- 4. Main UI Logic ---
 
-st.title("📂 KP Personal Assistant")
+st.title("🤖 KP Personal Assistant")
 
 if not st.session_state.context:
     if not user_api_key:

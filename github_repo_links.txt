@@ -1,3 +1,4 @@
-"Blood Management System", https://github.com/kKhantPaing/Blood-Management-System-Py
+"Blood Management System Py", https://github.com/kKhantPaing/Blood-Management-System-Py
 "Hate Speech App", https://github.com/kKhantPaing/HSapp
 "Yoga Android App", https://github.com/kKhantPaing/Yoga-Android-App
+"KP Personal Assistant", https://github.com/kKhantPaing/KP-Personal-Assistant

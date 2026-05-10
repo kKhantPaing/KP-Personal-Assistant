@@ -2,6 +2,8 @@
 
 A Streamlit-based chat assistant for exploring KP-related content from local data and GitHub README files.
 
+Live app: https://kp-personal-assistant.streamlit.app/
+
 The app loads `data.md`, fetches repository README content from `github_readme.txt`, summarizes it, and answers user questions using Groq models.
 
 ## Features
@@ -71,6 +73,8 @@ streamlit run app.py
 ```
 
 Open the URL shown in the terminal to use the app.
+
+Hosted version: https://kp-personal-assistant.streamlit.app/
 
 ## Usage
 
