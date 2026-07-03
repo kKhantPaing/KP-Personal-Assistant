@@ -9,7 +9,7 @@
 - **GitHub:** [kKhantPaing](https://github.com/kKhantPaing)
 
 ## Education
-
+- **Master of Science in Computer Science (International Program)**, Mahidol University (2026 - Present)
 - **BSc (Hons) in Computing**, University of Greenwich
 
 ## Experience
